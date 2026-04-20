@@ -1,0 +1,147 @@
+name: 📝 Upload App Store Metadata
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Загружает ТОЛЬКО метаданные (описание, subtitle, ключи, URL) на страницу
+# приложения в App Store Connect. Бинарный файл (IPA) НЕ загружается.
+#
+# Запускается вручную через Actions → "Run workflow".
+#
+# Источник описаний (переиспользуемая структура):
+#   descriptions/gr/<locale>.txt  — группа gr по ТЗ (серый фон)
+#   descriptions/wh/<locale>.txt  — группа wh по ТЗ (белый фон)
+#   Файлы названы точно по кодам Apple (en-US, de-DE, zh-Hant и т.д.)
+#
+# Что меняется по локалям:  description.txt
+# Что остаётся как en-US:   name, subtitle, keywords, support_url,
+#                           marketing_url, privacy_url
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload-metadata:
+    name: Upload Metadata → App Store Connect
+    runs-on: macos-latest
+
+    steps:
+      # ───────────────────────────────────────────────
+      # 1. Получаем репозиторий
+      # ───────────────────────────────────────────────
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # ───────────────────────────────────────────────
+      # 2. Ruby + Bundler (для Fastlane)
+      # ───────────────────────────────────────────────
+      - name: 💎 Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      # ───────────────────────────────────────────────
+      # 3. Собираем структуру fastlane/metadata/
+      #    Читаем descriptions/gr/ и descriptions/wh/
+      #    — файлы уже названы Apple locale codes.
+      #    Каждый файл копируется в
+      #    fastlane/metadata/<locale>/description.txt
+      # ───────────────────────────────────────────────
+      - name: 🗂️ Build Fastlane metadata structure (descriptions)
+        run: |
+          python3 << 'PYEOF'
+          import os, shutil
+
+          META = "fastlane/metadata"
+
+          # gr/ и wh/ — две группы строго по ТЗ; имя файла == Apple locale code
+          sources = [
+              ("descriptions/gr", "gr"),
+              ("descriptions/wh", "wh"),
+          ]
+
+          ok, missing = 0, []
+          for folder, label in sources:
+              if not os.path.isdir(folder):
+                  print(f"  ⚠️  folder not found: {folder}")
+                  continue
+              for fname in sorted(os.listdir(folder)):
+                  if not fname.endswith(".txt"):
+                      continue
+                  locale = fname[:-4]          # strip .txt → Apple locale code
+                  src    = os.path.join(folder, fname)
+                  dst    = os.path.join(META, locale)
+                  os.makedirs(dst, exist_ok=True)
+                  shutil.copy(src, os.path.join(dst, "description.txt"))
+                  print(f"  ✅  [{label}] {locale:12s}  ←  {src}")
+                  ok += 1
+
+          print(f"\nDone: {ok} locales copied, {len(missing)} missing.")
+          if missing:
+              raise SystemExit(1)
+          PYEOF
+
+      # ───────────────────────────────────────────────
+      # 4. Записываем общие метаданные во ВСЕ локали:
+      #    name, subtitle, keywords, URL-ы.
+      #    Значения берутся из appstore_config.yml.
+      #    App Store Connect не наследует эти поля
+      #    автоматически — нужно задавать явно.
+      #    description.txt уже лежит из шага 3.
+      # ───────────────────────────────────────────────
+      - name: 📄 Write shared metadata to all locales (reads appstore_config.yml)
+        run: |
+          python3 << 'PYEOF'
+          import os, re
+
+          def parse_config(path):
+              """Parse simple key: "value" YAML without external libraries."""
+              result = {}
+              with open(path, encoding="utf-8") as f:
+                  for line in f:
+                      line = line.strip()
+                      if not line or line.startswith("#"):
+                          continue
+                      m = re.match(r'^(\w+):\s*"(.*?)"\s*$', line)
+                      if m:
+                          result[m.group(1)] = m.group(2)
+              return result
+
+          cfg = parse_config("appstore_config.yml")
+
+          required = ["app_name", "subtitle", "keywords", "support_url", "marketing_url", "privacy_url"]
+          missing  = [k for k in required if k not in cfg]
+          if missing:
+              raise SystemExit(f"❌  appstore_config.yml missing keys: {missing}")
+
+          META = "fastlane/metadata"
+          locales = sorted(
+              d for d in os.listdir(META)
+              if os.path.isdir(os.path.join(META, d))
+          )
+
+          for locale in locales:
+              d = os.path.join(META, locale)
+              with open(os.path.join(d, "name.txt"),         "w", encoding="utf-8") as f: f.write(cfg["app_name"])
+              with open(os.path.join(d, "subtitle.txt"),     "w", encoding="utf-8") as f: f.write(cfg["subtitle"])
+              with open(os.path.join(d, "keywords.txt"),     "w", encoding="utf-8") as f: f.write(cfg["keywords"])
+              with open(os.path.join(d, "support_url.txt"),  "w", encoding="utf-8") as f: f.write(cfg["support_url"])
+              with open(os.path.join(d, "marketing_url.txt"),"w", encoding="utf-8") as f: f.write(cfg["marketing_url"])
+              with open(os.path.join(d, "privacy_url.txt"),  "w", encoding="utf-8") as f: f.write(cfg["privacy_url"])
+              print(f"  ✅  {locale}")
+
+          print(f"\nTotal locales: {len(locales)}")
+          PYEOF
+
+      # ───────────────────────────────────────────────
+      # 5. Загружаем метаданные через Fastlane deliver.
+      #    Бинарный файл НЕ загружается (skip_binary_upload).
+      #    Скриншоты НЕ трогаются (skip_screenshots).
+      # ───────────────────────────────────────────────
+      - name: 🚀 Upload metadata to App Store Connect via Fastlane
+        run: bundle exec fastlane ios upload_metadata
+        env:
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_KEY_ID:    ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_P8:        ${{ secrets.APPSTORE_P8 }}
+          IOS_BUNDLE_ID:      ${{ secrets.IOS_BUNDLE_ID }}

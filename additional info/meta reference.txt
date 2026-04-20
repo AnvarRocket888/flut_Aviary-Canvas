@@ -1,0 +1,19 @@
+PRO TRACKING FISH - APP STORE DESCRIPTION
+
+APP NAME: Pro Tracking Fish (название задано в project_config)
+
+SUBTITLE: Smart Aquarium Care & Fish Tracker (не более 30 символов)
+
+DESCRIPTION:
+Every night you go to sleep, you start building a tower. Each hour of rest adds one floor. Sleep the full eight hours and your tower stands tall and complete. Wake up early and you see exactly how many floors you missed.
+The idea is simple. Good sleep should feel like progress, not a chore. Instead of charts and numbers, you watch a colorful tower grow night after night. Each floor has its own name and color, from the Foundation Stone at the bottom to the Golden Crown at the top.
+When you wake up, the app asks how you feel. Pick a mood, take a morning selfie if you want, and write a short note about your dream. All of this gets saved to your history so you can look back and see how your sleep has changed over time.
+Set your alarm and sleep goal in the app. It will figure out the best bedtime for you and remind you when it is time to rest. The alarm works even when the app is closed.
+Your profile tracks everything. Total towers built, your longest streak of complete nights, and a gallery of all your morning photos. There is also a ranking system that gives you a title based on how many towers you have finished, starting from Newcomer and going all the way up to Celestial Architect.
+The settings screen shows your stats, sleep tips that change every time you visit, and a list of achievements you can unlock by sleeping well consistently.
+No accounts. No internet required. No ads. Just you and your tower.
+(красивое описание, простым языком, передающее функционал приложения, без эмодзи и спец символов)
+
+KEYWORDS:
+aquarium,fishcare,waterparameters,aquatracker,fishkeeper,waterquality,fishhealth,fishtank
+(не более 10 символов, без пробелов, отделять запятыми)

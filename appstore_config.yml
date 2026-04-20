@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# appstore_config.yml — настройки App Store для этого проекта.
+#
+# Этот файл читается workflow .github/workflows/upload_metadata.yml
+# на шаге "Write shared metadata".
+#
+# Что редактировать здесь:
+#   - app_name, subtitle, keywords — отображаются в App Store
+#   - support_url     — страница поддержки (обязательна)
+#   - marketing_url   — сайт приложения (необязательна)
+#   - privacy_url     — политика конфиденциальности (обязательна)
+#
+# Правила:
+#   - Значения в двойных кавычках
+#   - keywords: через запятую, без пробелов, не более 100 символов
+#   - subtitle: не более 30 символов
+#   - Без trailing slash в URL
+# ─────────────────────────────────────────────────────────────────────────────
+
+app_name:      "__"
+subtitle:      "__"
+keywords:      "__"
+
+support_url:   "__/support.html"
+marketing_url: "__"
+privacy_url:   "__/privacy-policy.html"

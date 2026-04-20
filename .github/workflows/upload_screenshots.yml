@@ -1,0 +1,166 @@
+name: 📸 Upload App Store Screenshots
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Загружает скриншоты во все локали App Store Connect.
+# Бинарный файл и метаданные НЕ затрагиваются.
+#
+# Источник скриншотов (переиспользуемая структура):
+#   Screenshots/gr/<device>/<NN>.png  — группа gr по ТЗ (серый фон)
+#   Screenshots/wh/<device>/<NN>.png  — группа wh по ТЗ (белый фон)
+#
+# Устройства и целевые размеры:
+#   iphone → 1242 × 2688  (iPhone 6.5")
+#   ipad   → 2048 × 2732  (iPad Pro 12.9")
+#
+# Порядок скриншотов определяется именем файла (01.png < 02.png < ...).
+# Количество скриншотов — произвольное, добавляй файлы в папку.
+# Если размер исходника не совпадает — sips автоматически ресайзит.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload-screenshots:
+    name: Upload Screenshots → App Store Connect
+    runs-on: macos-latest
+
+    steps:
+      # ───────────────────────────────────────────────
+      # 1. Получаем репозиторий
+      # ───────────────────────────────────────────────
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # ───────────────────────────────────────────────
+      # 2. Ruby + Bundler (для Fastlane)
+      # ───────────────────────────────────────────────
+      - name: 💎 Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      # ───────────────────────────────────────────────
+      # 3. Ресайзим и раскладываем скриншоты по локалям.
+      #    Читаем Screenshots/gr/ и Screenshots/wh/,
+      #    для каждой локали определяем вариант (gr/wh),
+      #    копируем в fastlane/screenshots/<locale>/
+      #    с префиксом устройства для уникальности имён.
+      #    Если размер исходника неверный — sips ресайзит.
+      # ───────────────────────────────────────────────
+      - name: 📐 Resize & distribute screenshots to fastlane/screenshots/<locale>/
+        run: |
+          python3 << 'PYEOF'
+          import os, shutil, subprocess
+
+          # ── locale → variant (gr / wh) строго по ТЗ ─────────────────────────
+          LOCALES = {
+              # gr — группа серого АСО по ТЗ
+              "de-DE": "gr", "da":    "gr", "en-GB": "gr", "fi":    "gr",
+              "fr-FR": "gr", "el":    "gr", "it":    "gr", "ca":    "gr",
+              "hr":    "gr", "no":    "gr", "nl-NL": "gr", "pl":    "gr",
+              "pt-PT": "gr", "ro":    "gr", "ru":    "gr", "sv":    "gr",
+              "sk":    "gr", "es-ES": "gr", "cs":    "gr", "tr":    "gr",
+              "hu":    "gr",
+              # wh — группа белого АСО по ТЗ
+              "en-US":   "wh", "en-CA":  "wh", "en-AU":  "wh", "ar-SA":  "wh",
+              "fr-CA":   "wh", "he":     "wh", "hi":     "wh", "zh-Hant":"wh",
+              "zh-Hans": "wh", "ja":     "wh", "ko":     "wh", "ms":     "wh",
+              "es-MX":   "wh", "pt-BR":  "wh", "th":     "wh", "uk":     "wh",
+              "vi":      "wh", "id":     "wh",
+          }
+
+          # ── целевые размеры по устройству ─────────────────────────────────
+          DEVICES = {
+              "iphone": (1242, 2688),
+              "ipad":   (2048, 2732),
+          }
+
+          SCREENSHOTS_ROOT = "Screenshots"
+          FASTLANE_SS      = "fastlane/screenshots"
+
+          def get_size(path):
+              r = subprocess.run(
+                  ["sips", "-g", "pixelWidth", "-g", "pixelHeight", path],
+                  capture_output=True, text=True
+              )
+              w = h = None
+              for line in r.stdout.splitlines():
+                  if "pixelWidth"  in line: w = int(line.split()[-1])
+                  if "pixelHeight" in line: h = int(line.split()[-1])
+              return w, h
+
+          def copy_or_resize(src, dst, tw, th):
+              os.makedirs(os.path.dirname(dst), exist_ok=True)
+              w, h = get_size(src)
+              if w == tw and h == th:
+                  shutil.copy(src, dst)
+                  return f"ok ({tw}×{th})"
+              # sips -z <height> <width>
+              subprocess.run(
+                  ["sips", "-z", str(th), str(tw), src, "--out", dst],
+                  check=True, capture_output=True
+              )
+              return f"resized {w}×{h} → {tw}×{th}"
+
+          total = 0
+          errors = []
+
+          for locale, variant in LOCALES.items():
+              for device, (tw, th) in DEVICES.items():
+                  src_dir = os.path.join(SCREENSHOTS_ROOT, variant, device)
+                  if not os.path.isdir(src_dir):
+                      errors.append(f"Missing source dir: {src_dir}")
+                      continue
+
+                  # Сортировка по имени — порядок строго по номеру файла
+                  files = sorted(
+                      f for f in os.listdir(src_dir) if f.lower().endswith(".png")
+                  )
+
+                  if not files:
+                      errors.append(f"No .png files in: {src_dir}")
+                      continue
+
+                  for fname in files:
+                      src = os.path.join(src_dir, fname)
+                      # Префикс устройства исключает конфликты имён iphone/ipad
+                      dst = os.path.join(FASTLANE_SS, locale, f"{device}_{fname}")
+                      status = copy_or_resize(src, dst, tw, th)
+                      print(f"  ✅  [{variant}] {locale:10s} {device:7s} {fname}  ({status})")
+                      total += 1
+
+          print(f"\nDone: {total} screenshots processed.")
+
+          if errors:
+              print("\n⚠️  Warnings:")
+              for e in errors:
+                  print(f"  - {e}")
+          PYEOF
+
+      # ───────────────────────────────────────────────
+      # 4. Показываем итоговое дерево для проверки
+      # ───────────────────────────────────────────────
+      - name: 🗂️ Show screenshot structure (sample)
+        run: |
+          echo "=== fastlane/screenshots/en-US/ ==="
+          ls fastlane/screenshots/en-US/ 2>/dev/null || echo "(empty)"
+          echo ""
+          echo "=== fastlane/screenshots/ru/ ==="
+          ls fastlane/screenshots/ru/ 2>/dev/null || echo "(empty)"
+          echo ""
+          echo "Total locale dirs: $(ls -d fastlane/screenshots/*/ 2>/dev/null | wc -l | tr -d ' ')"
+
+      # ───────────────────────────────────────────────
+      # 5. Загружаем скриншоты через Fastlane.
+      #    skip_metadata: true — метаданные не трогаем.
+      #    overwrite_screenshots: true — заменяем существующие.
+      # ───────────────────────────────────────────────
+      - name: 🚀 Upload screenshots to App Store Connect via Fastlane
+        run: bundle exec fastlane ios upload_screenshots
+        env:
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_KEY_ID:    ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_P8:        ${{ secrets.APPSTORE_P8 }}
+          IOS_BUNDLE_ID:      ${{ secrets.IOS_BUNDLE_ID }}
