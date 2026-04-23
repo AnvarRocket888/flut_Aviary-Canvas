@@ -1,0 +1,8 @@
+Aviary Canvas is a fully offline utility app for planning bird enclosures. No account, no login, and no internet connection are required at any point — the app works entirely on-device.
+How to test core functionality:
+1. Open the app. A splash screen appears for 5 seconds (or tap to dismiss).
+2. Tap Canvas in the bottom navigation to open the enclosure planner. Tap the grid to draw enclosure zones — assign each zone a type (feeding, nesting, roosting, etc.) and a bird count. The calculator validates spacing requirements in real time.
+3. Tap Calculator to use the standalone perch calculator — enter species and bird count to get recommended perch height and rail spacing.
+4. Tap Profile to view XP, rank, streaks, and progress.
+5. Tap Achievements to see the 17 achievements and 7 trophies.
+No special setup required. There are no in-app purchases, subscriptions, sign-in flows, or network requests. All data is stored locally on the device.
