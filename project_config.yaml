@@ -1,7 +1,7 @@
 app_name: "Aviary Canvas"
 bundle_id: "com.denisnicole.aviarycanvas"
 icon_path: "Icon.png"
-team_id: ""
+team_id: "A3A64N2Y5P"
 app_version: "1.0.0"
 build_number: "1"
 podfile_path: "scripts/Podfile"
