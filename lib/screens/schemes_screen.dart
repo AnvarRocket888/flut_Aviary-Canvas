@@ -1,9 +1,5 @@
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../models/aviary_scheme.dart';
 import '../services/gamification_service.dart';
 import '../services/storage_service.dart';
@@ -104,124 +100,6 @@ class _SchemesScreenState extends State<SchemesScreen> {
     widget.onSchemeTap(scheme);
   }
 
-  // ── Import / Backup / Restore ─────────────────────────────
-
-  Future<void> _importScheme() async {
-    final result = await FilePicker.platform.pickFiles(
-      type:           FileType.custom,
-      allowedExtensions: ['json'],
-    );
-    if (result == null || result.files.isEmpty) return;
-    final path = result.files.single.path;
-    if (path == null || !mounted) return;
-    try {
-      final json   = await File(path).readAsString();
-      final scheme = await StorageService.instance.importSchemeJson(json);
-      if (scheme == null) {
-        _showError('No valid scheme found in file.');
-        return;
-      }
-      GamificationService.instance.onSchemeCreated(totalBirds: scheme.totalBirds);
-      await _load();
-      if (!mounted) return;
-      showCupertinoDialog(
-        context: context,
-        builder: (_) => CupertinoAlertDialog(
-          title:   const Text('Imported'),
-          content: Text('"${scheme.name}" added to your schemes.'),
-          actions: [
-            CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK')),
-          ],
-        ),
-      );
-    } catch (_) {
-      _showError('Could not read file. Make sure it is a valid JSON scheme.');
-    }
-  }
-
-  Future<void> _backup() async {
-    try {
-      final json = await StorageService.instance.exportBackupJson();
-      final dir  = await getTemporaryDirectory();
-      final file = File('${dir.path}/aviary_backup_${DateTime.now().millisecondsSinceEpoch}.json');
-      await file.writeAsString(json);
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Aviary Canvas Backup',
-      );
-    } catch (_) {
-      _showError('Backup failed.');
-    }
-  }
-
-  Future<void> _restore() async {
-    bool confirm = false;
-    await showCupertinoDialog(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title:   const Text('Restore from Backup'),
-        content: const Text(
-            'Pick a backup JSON file. Existing schemes with the same ID will be overwritten.'),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () { confirm = true; Navigator.pop(context); },
-            child: const Text('Continue'),
-          ),
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-    if (!confirm) return;
-    final result = await FilePicker.platform.pickFiles(
-      type:           FileType.custom,
-      allowedExtensions: ['json'],
-    );
-    if (result == null || result.files.isEmpty) return;
-    final path = result.files.single.path;
-    if (path == null || !mounted) return;
-    try {
-      final json = await File(path).readAsString();
-      await StorageService.instance.importBackupJson(json);
-      await _load();
-      if (!mounted) return;
-      showCupertinoDialog(
-        context: context,
-        builder: (_) => CupertinoAlertDialog(
-          title:   const Text('Restored'),
-          content: const Text('Your data has been restored.'),
-          actions: [
-            CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK')),
-          ],
-        ),
-      );
-    } catch (_) {
-      _showError('Restore failed. Make sure it is a valid backup file.');
-    }
-  }
-
-  void _showError(String msg) {
-    if (!mounted) return;
-    showCupertinoDialog(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title:   const Text('Error'),
-        content: Text(msg),
-        actions: [
-          CupertinoDialogAction(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK')),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final safeTop = MediaQuery.of(context).padding.top;
@@ -244,27 +122,6 @@ class _SchemesScreenState extends State<SchemesScreen> {
                 ],
               ),
               const Spacer(),
-              // Import from JSON
-              CupertinoButton(
-                padding:   EdgeInsets.zero,
-                onPressed: _importScheme,
-                child: const Icon(CupertinoIcons.tray_arrow_down,
-                    color: AppColors.accent, size: 22),
-              ),
-              // Backup
-              CupertinoButton(
-                padding:   EdgeInsets.zero,
-                onPressed: _backup,
-                child: const Icon(CupertinoIcons.square_arrow_up,
-                    color: AppColors.textMuted, size: 22),
-              ),
-              // Restore
-              CupertinoButton(
-                padding:   EdgeInsets.zero,
-                onPressed: _restore,
-                child: const Icon(CupertinoIcons.arrow_counterclockwise,
-                    color: AppColors.textMuted, size: 22),
-              ),
               CupertinoButton(
                 padding:   EdgeInsets.zero,
                 onPressed: _createNew,
