@@ -73,7 +73,7 @@ class _SchemesScreenState extends State<SchemesScreen> {
             controller:  ctrl,
             placeholder: 'My Aviary',
             autofocus:   true,
-            style: const TextStyle(color: CupertinoColors.black),
+            style: const TextStyle(color: CupertinoColors.white),
           ),
         ),
         actions: [
@@ -160,18 +160,24 @@ class _SchemesScreenState extends State<SchemesScreen> {
               ? const Center(child: CupertinoActivityIndicator())
               : _schemes.isEmpty
                   ? _EmptyState(onCreate: _createNew)
-                  : RefreshIndicator.adaptive(
-                      onRefresh: _load,
-                      child: ListView.builder(
-                        padding:     const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                        itemCount:   _schemes.length,
-                        itemBuilder: (_, i) => SchemeCard(
-                          scheme:   _schemes[i],
-                          index:    i,
-                          onTap:    () => widget.onSchemeTap(_schemes[i]),
-                          onDelete: () => _delete(_schemes[i]),
+                  : CustomScrollView(
+                      slivers: [
+                        CupertinoSliverRefreshControl(onRefresh: _load),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                          sliver:  SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (_, i) => SchemeCard(
+                                scheme:   _schemes[i],
+                                index:    i,
+                                onTap:    () => widget.onSchemeTap(_schemes[i]),
+                                onDelete: () => _delete(_schemes[i]),
+                              ),
+                              childCount: _schemes.length,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
         ),
       ],
@@ -210,7 +216,7 @@ class _EmptyState extends StatelessWidget {
             color:     AppColors.primary,
             onPressed: onCreate,
             child:     const Text('Create First Scheme',
-              style: TextStyle(color: CupertinoColors.black),
+              style: TextStyle(color: CupertinoColors.white),
             ),
           ),
         ],

@@ -132,7 +132,7 @@ class _CanvasScreenState extends State<CanvasScreen> {
             controller:  ctrl,
             placeholder: 'My Aviary',
             autofocus:   true,
-            style:        const TextStyle(color: CupertinoColors.black),
+            style:        const TextStyle(color: CupertinoColors.white),
           ),
         ),
         actions: [
@@ -161,7 +161,7 @@ class _CanvasScreenState extends State<CanvasScreen> {
           child:   CupertinoTextField(
             controller:  ctrl,
             autofocus:   true,
-            style: const TextStyle(color: CupertinoColors.black),
+            style: const TextStyle(color: CupertinoColors.white),
           ),
         ),
         actions: [
@@ -357,7 +357,7 @@ class _TopBar extends StatelessWidget {
           ),
           // Actions
           _IconBtn(icon: CupertinoIcons.add,            onTap: onNew),
-          _IconBtn(icon: CupertinoIcons.bird,            onTap: onBirds),
+          _IconBtn(icon: CupertinoIcons.person_3_fill,   onTap: onBirds),
           _IconBtn(icon: CupertinoIcons.square_arrow_up, onTap: onExport),
           CupertinoButton(
             padding:   EdgeInsets.zero,

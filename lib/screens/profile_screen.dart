@@ -59,7 +59,14 @@ class _ProfileScreenState extends State<ProfileScreen>
           // XP bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child:   XPBar(xp: _profile.xp),
+            child: XPBar(
+              currentXP:     _profile.xp,
+              progress:      GamificationService.instance.getXPProgress(),
+              rankTitle:     _rank.title,
+              rankEmoji:     _rank.emoji,
+              nextRankTitle: GamificationService.instance.getNextRank()?.title,
+              xpToNext:      GamificationService.instance.getXPToNext(),
+            ),
           ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
           const SizedBox(height: 20),
           // Streak

@@ -9,7 +9,7 @@ class AppsFlyerService {
   AppsFlyerService._();
 
   void _log(String event, Map<String, dynamic> params) {
-    debugPrint('[AppsFlyer] event=$event  params=$params');
+    // debugPrint('[AppsFlyer] event=$event  params=$params');
   }
 
   /// Fired on every cold and warm launch.
