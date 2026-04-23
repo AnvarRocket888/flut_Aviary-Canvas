@@ -1,0 +1,10 @@
+APP NAME: Aviary Canvas
+
+SUBTITLE: Aviary Planner & Calculator
+
+DESCRIPTION:
+You have a patch of ground and a flock of birds that deserve better than a cramped wire pen. Aviary Canvas starts you with a blank grid and the tools to turn that patch into a properly planned home.
+Draw the outline of your enclosure. Fill zones for feeding, drinking, nesting, roosting, and outdoor runs. Add a storage corner. Label each zone and set the number of birds it will serve. In the same moment you draw, the app checks the math. Every bird gets enough floor space. Every group has access to a feeder and a water point. Predators and prey stay on separate sides.
+
+KEYWORDS:
+aviary,birdcage,enclosure,poultry,birdfarm,birdplan,calculator,birdkeeper,floorplan,birdcare
