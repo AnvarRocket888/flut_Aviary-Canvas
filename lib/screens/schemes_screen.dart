@@ -28,7 +28,7 @@ class _SchemesScreenState extends State<SchemesScreen> {
   }
 
   Future<void> _load() async {
-    final list = await StorageService.instance.loadAllSchemes();
+    final list = List.of(await StorageService.instance.loadAllSchemes());
     list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     if (!mounted) return;
     setState(() { _schemes = list; _loading = false; });
