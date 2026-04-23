@@ -2,10 +2,9 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import '../models/aviary_scheme.dart';
 import '../theme/app_colors.dart';
-import '../utils/constants.dart';
 
-/// Enum for the four drawing tools.
-enum DrawingTool { pencil, rectangle, eraser, fill }
+/// Drawing tools available on the canvas.
+enum DrawingTool { pencil, rectangle, eraser, fill, move }
 
 /// CustomPainter that renders the aviary grid.
 /// Draws zone fills, grid lines, optional rectangle preview.
@@ -116,6 +115,7 @@ class GridCanvas extends StatefulWidget {
   final DrawingTool            tool;
   final int                    currentZone;
   final void Function(List<List<int>>) onGridChanged;
+  final void Function(bool canUndo, bool canRedo)? onUndoRedoChanged;
 
   const GridCanvas({
     super.key,
@@ -123,17 +123,29 @@ class GridCanvas extends StatefulWidget {
     required this.tool,
     required this.currentZone,
     required this.onGridChanged,
+    this.onUndoRedoChanged,
   });
 
   @override
-  State<GridCanvas> createState() => _GridCanvasState();
+  GridCanvasState createState() => GridCanvasState();
 }
 
-class _GridCanvasState extends State<GridCanvas> {
+class GridCanvasState extends State<GridCanvas> {
   late List<List<int>> _grid;
   (int, int)? _rectStart;
   (int, int)? _rectEnd;
   (int, int)? _lastCell;
+
+  // Undo / redo stacks (max 50 snapshots each)
+  final List<List<List<int>>> _undoStack = [];
+  final List<List<List<int>>> _redoStack = [];
+
+  // Move-tool state
+  int         _movingZone  = 0;
+  (int, int)? _moveLastCell;
+
+  bool get canUndo => _undoStack.isNotEmpty;
+  bool get canRedo => _redoStack.isNotEmpty;
 
   @override
   void initState() {
@@ -145,12 +157,47 @@ class _GridCanvasState extends State<GridCanvas> {
   void didUpdateWidget(GridCanvas old) {
     super.didUpdateWidget(old);
     if (old.scheme.id != widget.scheme.id) {
+      setState(() {
+        _grid = _copyGrid(widget.scheme.grid);
+        _undoStack.clear();
+        _redoStack.clear();
+      });
+      widget.onUndoRedoChanged?.call(false, false);
+      return;
+    }
+    // Grid size changed from outside (resize)
+    if (old.scheme.gridWidth  != widget.scheme.gridWidth ||
+        old.scheme.gridHeight != widget.scheme.gridHeight) {
       setState(() => _grid = _copyGrid(widget.scheme.grid));
     }
   }
 
   List<List<int>> _copyGrid(List<List<int>> src) =>
       src.map((r) => List<int>.from(r)).toList();
+
+  // ── Undo / redo ───────────────────────────────────────────
+  void _pushUndo() {
+    _undoStack.add(_copyGrid(_grid));
+    if (_undoStack.length > 50) _undoStack.removeAt(0);
+    _redoStack.clear();
+    widget.onUndoRedoChanged?.call(canUndo, canRedo);
+  }
+
+  void undo() {
+    if (_undoStack.isEmpty) return;
+    _redoStack.add(_copyGrid(_grid));
+    setState(() => _grid = _undoStack.removeLast());
+    widget.onGridChanged(_grid);
+    widget.onUndoRedoChanged?.call(canUndo, canRedo);
+  }
+
+  void redo() {
+    if (_redoStack.isEmpty) return;
+    _undoStack.add(_copyGrid(_grid));
+    setState(() => _grid = _redoStack.removeLast());
+    widget.onGridChanged(_grid);
+    widget.onUndoRedoChanged?.call(canUndo, canRedo);
+  }
 
   (int, int)? _cellAt(Offset pos, Size size) {
     final cw = size.width  / widget.scheme.gridWidth;
@@ -213,10 +260,16 @@ class _GridCanvasState extends State<GridCanvas> {
         onPanStart: (d) {
           final cell = _cellAt(d.localPosition, size);
           if (cell == null) return;
+          _pushUndo();
           if (widget.tool == DrawingTool.fill) {
             _floodFill(cell);
           } else if (widget.tool == DrawingTool.rectangle) {
             setState(() { _rectStart = cell; _rectEnd = cell; });
+          } else if (widget.tool == DrawingTool.move) {
+            _movingZone  = _grid[cell.$1][cell.$2];
+            _moveLastCell = cell;
+            setState(() => _grid[cell.$1][cell.$2] = 0);
+            widget.onGridChanged(_grid);
           } else {
             _lastCell = cell;
             _paint(cell);
@@ -227,6 +280,17 @@ class _GridCanvasState extends State<GridCanvas> {
           if (cell == null) return;
           if (widget.tool == DrawingTool.rectangle) {
             setState(() => _rectEnd = cell);
+          } else if (widget.tool == DrawingTool.move) {
+            if (cell != _moveLastCell && _movingZone != 0) {
+              setState(() {
+                if (_moveLastCell != null) {
+                  _grid[_moveLastCell!.$1][_moveLastCell!.$2] = 0;
+                }
+                _grid[cell.$1][cell.$2] = _movingZone;
+                _moveLastCell = cell;
+              });
+              widget.onGridChanged(_grid);
+            }
           } else if (widget.tool != DrawingTool.fill) {
             if (cell != _lastCell) {
               _lastCell = cell;
@@ -239,7 +303,13 @@ class _GridCanvasState extends State<GridCanvas> {
               _rectStart != null && _rectEnd != null) {
             _fillRect(_rectStart!, _rectEnd!);
           }
-          setState(() { _rectStart = null; _rectEnd = null; _lastCell = null; });
+          setState(() {
+            _rectStart    = null;
+            _rectEnd      = null;
+            _lastCell     = null;
+            _moveLastCell = null;
+            _movingZone   = 0;
+          });
         },
         child: CustomPaint(
           painter: GridPainter(

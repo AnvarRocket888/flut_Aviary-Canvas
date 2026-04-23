@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/achievement.dart';
 import '../models/aviary_scheme.dart';
 import '../models/rank_model.dart';
@@ -12,6 +13,7 @@ import 'achievements_screen.dart';
 import 'calculator_screen.dart';
 import 'canvas_screen.dart';
 import 'profile_screen.dart';
+import 'onboarding_screen.dart';
 import 'schemes_screen.dart';
 
 /// Root screen with custom bottom navigation and gamification overlays.
@@ -36,6 +38,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkOnboarding());
 
     final gami = GamificationService.instance;
 
@@ -107,6 +110,19 @@ class _MainScreenState extends State<MainScreen> {
       default:
         return const CanvasScreen();
     }
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('onboarding_done') == true) return;
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      CupertinoPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const OnboardingScreen(),
+      ),
+    );
   }
 
   @override

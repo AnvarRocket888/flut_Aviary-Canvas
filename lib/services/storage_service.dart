@@ -79,4 +79,53 @@ class StorageService {
   }
 
   Future<int> schemeCount() async => (await _loadIndex()).length;
+
+  // ── Backup / Restore ──────────────────────────────────────
+
+  /// Returns a JSON string containing all schemes and the user profile.
+  Future<String> exportBackupJson() async {
+    final profile = await loadUserProfile();
+    final schemes = await loadAllSchemes();
+    return jsonEncode({
+      'version':    1,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'profile':    profile.toJson(),
+      'schemes':    schemes.map((s) => s.toJson()).toList(),
+    });
+  }
+
+  /// Restores all schemes and the user profile from a backup JSON string.
+  /// Merges with existing data (schemes with the same id are overwritten).
+  Future<void> importBackupJson(String json) async {
+    final data = jsonDecode(json) as Map<String, dynamic>;
+    if (data['profile'] != null) {
+      final p = UserProfile.fromJson(data['profile'] as Map<String, dynamic>);
+      await saveUserProfile(p);
+    }
+    if (data['schemes'] != null) {
+      for (final raw in data['schemes'] as List) {
+        final scheme = AviaryScheme.fromJson(raw as Map<String, dynamic>);
+        await saveScheme(scheme);
+      }
+    }
+  }
+
+  /// Imports a single scheme from a JSON string (either a scheme or a backup).
+  Future<AviaryScheme?> importSchemeJson(String json) async {
+    final data = jsonDecode(json) as Map<String, dynamic>;
+    // Support single-scheme JSON or backup JSON (take first scheme)
+    if (data.containsKey('schemes')) {
+      final list = data['schemes'] as List;
+      if (list.isEmpty) return null;
+      final scheme = AviaryScheme.fromJson(list.first as Map<String, dynamic>);
+      await saveScheme(scheme);
+      return scheme;
+    }
+    if (data.containsKey('id')) {
+      final scheme = AviaryScheme.fromJson(data);
+      await saveScheme(scheme);
+      return scheme;
+    }
+    return null;
+  }
 }

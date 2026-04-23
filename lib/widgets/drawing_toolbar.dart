@@ -6,12 +6,19 @@ import '../utils/constants.dart';
 import 'grid_painter.dart';
 
 /// Bottom toolbar for the Canvas screen.
-/// Shows: tool selector row + zone type selector row.
+/// Shows: tool selector row + actions row + zone type selector row.
 class DrawingToolbar extends StatelessWidget {
   final DrawingTool            selectedTool;
   final int                    selectedZone;
   final ValueChanged<DrawingTool> onToolChanged;
   final ValueChanged<int>         onZoneChanged;
+  final bool         canUndo;
+  final bool         canRedo;
+  final VoidCallback? onUndo;
+  final VoidCallback? onRedo;
+  final bool         zoomEnabled;
+  final VoidCallback? onZoomToggle;
+  final VoidCallback? onResize;
 
   const DrawingToolbar({
     super.key,
@@ -19,13 +26,21 @@ class DrawingToolbar extends StatelessWidget {
     required this.selectedZone,
     required this.onToolChanged,
     required this.onZoneChanged,
+    this.canUndo     = false,
+    this.canRedo     = false,
+    this.onUndo,
+    this.onRedo,
+    this.zoomEnabled = false,
+    this.onZoomToggle,
+    this.onResize,
   });
 
   static const List<(DrawingTool, IconData, String)> _tools = [
-    (DrawingTool.pencil,    CupertinoIcons.pencil,         'Draw'),
-    (DrawingTool.rectangle, CupertinoIcons.rectangle,      'Rect'),
-    (DrawingTool.eraser,    CupertinoIcons.clear_circled,  'Erase'),
-    (DrawingTool.fill,      CupertinoIcons.paintbrush,     'Fill'),
+    (DrawingTool.pencil,    CupertinoIcons.pencil,                          'Draw'),
+    (DrawingTool.rectangle, CupertinoIcons.rectangle,                       'Rect'),
+    (DrawingTool.eraser,    CupertinoIcons.clear_circled,                   'Erase'),
+    (DrawingTool.fill,      CupertinoIcons.paintbrush,                      'Fill'),
+    (DrawingTool.move,      CupertinoIcons.arrow_up_left_arrow_down_right,  'Move'),
   ];
 
   @override
@@ -77,7 +92,43 @@ class DrawingToolbar extends StatelessWidget {
             ),
           ),
           Container(height: 0.5, color: AppColors.border),
-          // Zone selector
+          // Actions row: undo | redo | zoom | resize
+          SizedBox(
+            height: 36,
+            child: Row(
+              children: [
+                _ActionBtn(
+                  icon:    CupertinoIcons.arrow_counterclockwise,
+                  label:   'Undo',
+                  enabled: canUndo,
+                  onTap:   canUndo ? onUndo : null,
+                ),
+                Container(width: 0.5, height: 20, color: AppColors.border),
+                _ActionBtn(
+                  icon:    CupertinoIcons.arrow_clockwise,
+                  label:   'Redo',
+                  enabled: canRedo,
+                  onTap:   canRedo ? onRedo : null,
+                ),
+                Container(width: 0.5, height: 20, color: AppColors.border),
+                _ActionBtn(
+                  icon:    CupertinoIcons.search,
+                  label:   zoomEnabled ? 'Draw' : 'Zoom',
+                  enabled: true,
+                  active:  zoomEnabled,
+                  onTap:   onZoomToggle,
+                ),
+                Container(width: 0.5, height: 20, color: AppColors.border),
+                _ActionBtn(
+                  icon:    CupertinoIcons.crop,
+                  label:   'Resize',
+                  enabled: true,
+                  onTap:   onResize,
+                ),
+              ],
+            ),
+          ),
+          Container(height: 0.5, color: AppColors.border),
           SizedBox(
             height: 58,
             child: ListView.builder(
@@ -151,6 +202,57 @@ class _ZoneChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionBtn extends StatelessWidget {
+  final IconData      icon;
+  final String        label;
+  final bool          enabled;
+  final bool          active;
+  final VoidCallback? onTap;
+
+  const _ActionBtn({
+    required this.icon,
+    required this.label,
+    required this.enabled,
+    this.active = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = !enabled
+        ? AppColors.border
+        : active
+            ? AppColors.primary
+            : AppColors.textSecondary;
+    return Expanded(
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          color: active
+              ? AppColors.primary.withOpacity(0.15)
+              : const Color(0x00000000),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 15, color: color),
+              const SizedBox(height: 1),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 8,
+                  color:    color,
+                  fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
