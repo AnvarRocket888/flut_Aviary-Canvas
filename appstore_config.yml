@@ -17,10 +17,10 @@
 #   - Без trailing slash в URL
 # ─────────────────────────────────────────────────────────────────────────────
 
-app_name:      "__"
+app_name:      "Aviary Canvas"
 subtitle:      "__"
 keywords:      "__"
 
-support_url:   "__/support.html"
-marketing_url: "__"
-privacy_url:   "__/privacy-policy.html"
+support_url:   "https://aviarycanvas.com/support.html"
+marketing_url: "https://aviarycanvas.com"
+privacy_url:   "https://aviarycanvas.com/privacy-policy.html"
