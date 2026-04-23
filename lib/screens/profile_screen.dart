@@ -7,6 +7,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/xp_bar.dart';
 import 'help_screen.dart';
+import 'privacy_policy_screen.dart';
 import 'trophies_screen.dart';
 
 /// User profile tab – rank, XP, streak, stats, trophies link.
@@ -105,6 +106,14 @@ class _ProfileScreenState extends State<ProfileScreen>
               CupertinoPageRoute(builder: (_) => const HelpScreen()),
             )),
           ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
+          const SizedBox(height: 20),
+          // Privacy Policy button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child:   _PrivacyButton(onTap: () => Navigator.of(context).push(
+              CupertinoPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+            )),
+          ).animate().fadeIn(delay: 700.ms, duration: 400.ms),
         ],
       ),
     );
@@ -376,6 +385,45 @@ class _SpeciesCard extends StatelessWidget {
           )).toList(),
         ),
       ],
+    ),
+  );
+}
+
+// ── Privacy Policy button ────────────────────────────────────────────────────
+
+class _PrivacyButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _PrivacyButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => CupertinoButton(
+    padding:   EdgeInsets.zero,
+    onPressed: onTap,
+    child: Container(
+      padding:    const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color:        AppColors.textMuted.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border:       Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Text('🔒', style: TextStyle(fontSize: 28)),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Privacy Policy',
+                  style: AppTextStyles.heading3.copyWith(color: AppColors.textSecondary)),
+              Text('How we handle your data',
+                  style: AppTextStyles.caption),
+            ],
+          ),
+          const Spacer(),
+          const Icon(CupertinoIcons.chevron_right,
+              color: AppColors.textMuted, size: 18),
+        ],
+      ),
     ),
   );
 }
