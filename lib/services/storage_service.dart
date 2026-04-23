@@ -10,6 +10,12 @@ class StorageService {
 
   late SharedPreferences _prefs;
 
+  // Demo override – set by DemoData.inject(), never persisted.
+  List<AviaryScheme>? _demoSchemes;
+
+  /// Injects demo schemes in-memory only (never saved to SharedPreferences).
+  void injectDemoSchemes(List<AviaryScheme> schemes) => _demoSchemes = schemes;
+
   static const String _keyProfile       = 'user_profile';
   static const String _keySchemesIndex  = 'schemes_index';
   static const String _schemePrefix     = 'scheme_';
@@ -43,6 +49,7 @@ class StorageService {
       _prefs.setStringList(_keySchemesIndex, ids);
 
   Future<List<AviaryScheme>> loadAllSchemes() async {
+    if (_demoSchemes != null) return List<AviaryScheme>.unmodifiable(_demoSchemes!);
     final ids = await _loadIndex();
     final result = <AviaryScheme>[];
     for (final id in ids) {

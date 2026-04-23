@@ -15,6 +15,9 @@ class GamificationService {
   UserProfile _profile = const UserProfile();
   UserProfile get profile => _profile;
 
+  /// Injects a demo profile in-memory only (never persisted).
+  void injectDemoProfile(UserProfile p) => _profile = p;
+
   // ── UI callbacks ──────────────────────────────────────────
   void Function(Achievement)?  onAchievementUnlocked;
   void Function(RankModel)?    onRankUp;
