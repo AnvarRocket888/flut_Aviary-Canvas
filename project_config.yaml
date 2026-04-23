@@ -1,5 +1,5 @@
 app_name: "Aviary Canvas"
-bundle_id: "com.aviary.canvas"
+bundle_id: "com.denisnicole.aviarycanvas"
 icon_path: "Icon.png"
 team_id: ""
 app_version: "1.0.0"
