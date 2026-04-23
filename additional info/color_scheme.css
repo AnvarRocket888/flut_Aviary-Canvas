@@ -1,0 +1,47 @@
+:root {
+  /* Backgrounds */
+  --color-background: #0D1B2A;
+  --color-surface: #162333;
+  --color-surface-elevated: #1F3147;
+
+  /* Primary – warm amber (golden feathers) */
+  --color-primary: #F4A261;
+  --color-primary-dark: #C87941;
+
+  /* Secondary – forest green (foliage) */
+  --color-secondary: #52B788;
+  --color-secondary-dark: #3A8D68;
+
+  /* Accent – open sky blue */
+  --color-accent: #90E0EF;
+  --color-accent-dark: #48CAE4;
+
+  /* Gold – achievements */
+  --color-gold: #FFD166;
+  --color-gold-dark: #E6B800;
+
+  /* Text */
+  --color-text-primary: #F0EAD6;
+  --color-text-secondary: #9BAFBE;
+  --color-text-muted: #5C7A8A;
+
+  /* UI chrome */
+  --color-border: #2E4560;
+  --color-error: #EF4444;
+  --color-success: #52B788;
+  --color-streak: #FF6B6B;
+
+  /* Grid */
+  --color-grid-line: #2E4560;
+  --color-grid-background: #0F2035;
+
+  /* Zone colors */
+  --color-zone-feed: #FFB347;
+  --color-zone-water: #5BB8D4;
+  --color-zone-nest: #98C379;
+  --color-zone-perch: #C678DD;
+  --color-zone-dust: #D4A574;
+  --color-zone-exercise: #61AFEF;
+  --color-zone-storage: #ABB2BF;
+  --color-zone-entry: #E06C75;
+}
