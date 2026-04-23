@@ -177,6 +177,7 @@ jobs:
           MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           BUILD_NUMBER: ${{ github.run_number }}
+          FORCE_CI_BUILD_NUMBER: 'true'
           APPLE_CONNECT_EMAIL: ${{ secrets.APPLE_CONNECT_EMAIL }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
