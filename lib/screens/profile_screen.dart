@@ -6,6 +6,7 @@ import '../services/gamification_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/xp_bar.dart';
+import 'help_screen.dart';
 import 'trophies_screen.dart';
 
 /// User profile tab – rank, XP, streak, stats, trophies link.
@@ -96,6 +97,14 @@ class _ProfileScreenState extends State<ProfileScreen>
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child:   _SpeciesCard(species: _profile.usedBirdSpecies),
             ).animate().fadeIn(delay: 500.ms, duration: 400.ms),
+          const SizedBox(height: 20),
+          // Help / Tutorial button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child:   _HelpButton(onTap: () => Navigator.of(context).push(
+              CupertinoPageRoute(builder: (_) => const HelpScreen()),
+            )),
+          ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
         ],
       ),
     );
@@ -367,6 +376,45 @@ class _SpeciesCard extends StatelessWidget {
           )).toList(),
         ),
       ],
+    ),
+  );
+}
+
+// ── Help button ───────────────────────────────────────────────────────────────
+
+class _HelpButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _HelpButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => CupertinoButton(
+    padding:   EdgeInsets.zero,
+    onPressed: onTap,
+    child: Container(
+      padding:    const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color:        AppColors.accent.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border:       Border.all(color: AppColors.accent.withOpacity(0.35)),
+      ),
+      child: Row(
+        children: [
+          const Text('❓', style: TextStyle(fontSize: 28)),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('How to Use',
+                  style: AppTextStyles.heading3.copyWith(color: AppColors.accent)),
+              Text('Tips, tools & calculator guide',
+                  style: AppTextStyles.caption),
+            ],
+          ),
+          const Spacer(),
+          const Icon(CupertinoIcons.chevron_right,
+              color: AppColors.accent, size: 18),
+        ],
+      ),
     ),
   );
 }

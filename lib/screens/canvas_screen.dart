@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -46,9 +45,8 @@ class _CanvasScreenState extends State<CanvasScreen> {
   bool _zoomEnabled = false;
   final _transformController = TransformationController();
 
-  // Keys for canvas state access and PNG capture
+  // Keys for canvas state access
   final _canvasKey  = GlobalKey<GridCanvasState>();
-  final _repaintKey = GlobalKey();
 
   @override
   void initState() {
@@ -256,9 +254,19 @@ class _CanvasScreenState extends State<CanvasScreen> {
 
   Future<void> _shareAsPng() async {
     try {
-      final boundary =
-          _repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final image    = await boundary.toImage(pixelRatio: 3.0);
+      // Render the grid off-screen using PictureRecorder (no widget tree needed).
+      const cellPx = 40.0;
+      final w = _scheme.gridWidth  * cellPx;
+      final h = _scheme.gridHeight * cellPx;
+      final recorder = ui.PictureRecorder();
+      final canvas   = Canvas(recorder, Rect.fromLTWH(0, 0, w, h));
+      GridPainter(
+        grid:       _grid,
+        gridWidth:  _scheme.gridWidth,
+        gridHeight: _scheme.gridHeight,
+      ).paint(canvas, Size(w, h));
+      final picture  = recorder.endRecording();
+      final image    = await picture.toImage(w.toInt(), h.toInt());
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null || !mounted) return;
       final bytes = byteData.buffer.asUint8List();
@@ -269,9 +277,9 @@ class _CanvasScreenState extends State<CanvasScreen> {
         [XFile(file.path)],
         text: '${_scheme.name} – Aviary Canvas',
       );
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      _showSnack('Image export failed');
+      _showSnack('Export failed: $e');
       return;
     }
     GamificationService.instance.onSchemeExported();
@@ -461,17 +469,15 @@ class _CanvasScreenState extends State<CanvasScreen> {
               panEnabled:   _zoomEnabled,
               scaleEnabled: _zoomEnabled,
               maxScale:     5.0,
-              child: RepaintBoundary(
-                key: _repaintKey,
-                child: GridCanvas(
+              child: GridCanvas(
                   key:            _canvasKey,
                   scheme:         _scheme.copyWith(grid: _grid),
                   tool:           _tool,
                   currentZone:    _currentZone,
+                  drawingEnabled: !_zoomEnabled,
                   onGridChanged:  (g) => setState(() { _grid = g; _dirty = true; }),
                   onUndoRedoChanged: (cu, cr) =>
                       setState(() { _canUndo = cu; _canRedo = cr; }),
-                ),
               ),
             ),
           ),

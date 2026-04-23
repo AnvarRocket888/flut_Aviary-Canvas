@@ -116,6 +116,9 @@ class GridCanvas extends StatefulWidget {
   final int                    currentZone;
   final void Function(List<List<int>>) onGridChanged;
   final void Function(bool canUndo, bool canRedo)? onUndoRedoChanged;
+  /// When false (zoom mode active) the GestureDetector is removed so
+  /// InteractiveViewer can handle pan/scale gestures instead.
+  final bool drawingEnabled;
 
   const GridCanvas({
     super.key,
@@ -124,6 +127,7 @@ class GridCanvas extends StatefulWidget {
     required this.currentZone,
     required this.onGridChanged,
     this.onUndoRedoChanged,
+    this.drawingEnabled = true,
   });
 
   @override
@@ -256,6 +260,18 @@ class GridCanvasState extends State<GridCanvas> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (ctx, constraints) {
       final size = Size(constraints.maxWidth, constraints.maxHeight);
+      final canvas = CustomPaint(
+        painter: GridPainter(
+          grid:        _grid,
+          gridWidth:   widget.scheme.gridWidth,
+          gridHeight:  widget.scheme.gridHeight,
+          rectStart:   _rectStart,
+          rectEnd:     _rectEnd,
+          previewZone: widget.currentZone,
+        ),
+        child: const SizedBox.expand(),
+      );
+      if (!widget.drawingEnabled) return canvas;
       return GestureDetector(
         onPanStart: (d) {
           final cell = _cellAt(d.localPosition, size);
@@ -311,17 +327,7 @@ class GridCanvasState extends State<GridCanvas> {
             _movingZone   = 0;
           });
         },
-        child: CustomPaint(
-          painter: GridPainter(
-            grid:        _grid,
-            gridWidth:   widget.scheme.gridWidth,
-            gridHeight:  widget.scheme.gridHeight,
-            rectStart:   _rectStart,
-            rectEnd:     _rectEnd,
-            previewZone: widget.currentZone,
-          ),
-          child: const SizedBox.expand(),
-        ),
+        child: canvas,
       );
     });
   }
