@@ -12,6 +12,10 @@
 - [ ] Drag-to-move zones, not just paint-fill
 - [ ] Landscape mode support and adaptive layout
 
+- ### Calculator
+[ ] Save calculation results to PDF
+- [ ] Link calculator results back to a specific scheme
+
 ### UX / Polish
 - [ ] Onboarding tutorial overlay for first-time users
 - [ ] Larger grid sizes (up to 50×50)
