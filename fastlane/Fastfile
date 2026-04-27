@@ -154,7 +154,7 @@ desc "Sync codesigning certificates for Build"
       UI.message("Failed to update Info.plist: #{ex.message}")
     end
   symbols_file = File.expand_path("../build/app.ios.symbols", __dir__)
-  sh("flutter build ipa --release --obfuscate --split-debug-info=#{File.dirname(symbols_file)} --export-options-plist=#{export_options_path} --build-number=#{safe_build_number} --no-tree-shake-icons")
+  sh("flutter build ipa --release --export-options-plist=#{export_options_path} --build-number=#{safe_build_number} --no-tree-shake-icons")
     
     # Find the built IPA file with absolute path
     ipa_path = Dir.glob(File.expand_path("../build/ios/ipa/*.ipa", __dir__)).first
